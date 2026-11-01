@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#741f3c" />
+    <meta name="description" content="Расписание занятий Самарского государственного колледжа" />
+    <title>Пары — расписание колледжа</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #34242a;
+        --muted: #827279;
+        --line: #eee4e7;
+        --paper: #ffffff;
+        --canvas: #faf6f7;
+        --navy: #741f3c;
+        --blue: #923451;
+        --mint: #f0c3d0;
+        --surface-soft: #f8f1f3;
+        --accent-soft: #f7e9ed;
+        --accent-ink: #84304a;
+        --success-soft: #f1e7eb;
+        --success-ink: #87304b;
+        --radius: 22px;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        background:
+          radial-gradient(ellipse at 86% 0, rgba(142, 49, 78, .07), transparent 34rem),
+          var(--canvas);
+        color: var(--ink);
+        transition: background-color .22s ease, color .22s ease;
+      }
+      button, input { font: inherit; }
+      button { color: inherit; }
+      button:focus-visible, input:focus-visible {
+        outline: 3px solid rgba(142, 49, 78, .3);
+        outline-offset: 2px;
+      }
+      .shell { max-width: 740px; margin: 0 auto; padding: 0 20px 46px; }
+      .hero {
+        position: relative;
+        isolation: isolate;
+        z-index: 5;
+        margin: 0 -20px;
+        padding: max(15px, env(safe-area-inset-top)) 20px 19px;
+        border-radius: 0 0 24px 24px;
+        background:
+          radial-gradient(ellipse at 86% 4%, rgba(240, 195, 208, .16), transparent 16rem),
+          linear-gradient(145deg, #8b2a49, var(--navy));
+        color: #fff;
+        box-shadow: 0 8px 24px rgba(72,20,39,.12);
+      }
+      .topline, .hero-tools, .search-modes, .search-row, .section-head, .week-head, .quick-actions, .lesson-meta, .modal-head {
+        display: flex;
+        align-items: center;
+      }
+      .topline { justify-content: space-between; gap: 12px; }
+      .app-name { margin: 0; font-size: 19px; font-weight: 780; letter-spacing: -.04em; }
+      .app-handle { display: inline-block; margin-top: 3px; color: #efd7df; font-size: 11px; font-weight: 560; text-decoration: none; }
+      .app-handle:hover { color: #fff; text-decoration: underline; }
+      .hero-tools { gap: 7px; }
+      .icon-button {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        place-items: center;
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 12px;
+        background: rgba(255,255,255,.08);
+        color: #dfe7fb;
+        cursor: pointer;
+        transition: background .2s, transform .2s;
+      }
+      .icon-button:hover { transform: translateY(-1px); background: rgba(255,255,255,.15); }
+      .search-modes {
+        gap: 5px;
+        margin-top: 12px;
+        padding: 4px;
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 13px;
+        background: rgba(0,0,0,.15);
+      }
+      .search-mode {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 5px;
+        border: 0;
+        border-radius: 9px;
+        background: transparent;
+        color: #abb6ce;
+        font-size: 11px;
+        font-weight: 650;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: .18s ease;
+      }
+      .search-mode.active {
+        background: #fff;
+        color: #273552;
+        box-shadow: 0 2px 6px rgba(0,0,0,.12);
+      }
+      .search-picker { position: relative; margin-top: 9px; }
+      .search-row {
+        min-height: 44px;
+        gap: 9px;
+        padding: 0 12px;
+        border: 1px solid rgba(255,255,255,.17);
+        border-radius: 13px;
+        background: rgba(255,255,255,.1);
+        color: #bdc7dc;
+        transition: border-color .2s, background .2s;
+      }
+      .search-row:focus-within {       border-color: rgba(240,195,208,.85); background: rgba(255,255,255,.14); }
+      .search-row > svg { flex: 0 0 auto; color: #aebbd7; }
+      .search-input {
+        width: 100%;
+        min-width: 0;
+        height: 42px;
+        padding: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: #fff;
+        font-size: 13px;
+      }
+      .search-input::placeholder { color: #b4bfd5; opacity: .9; }
+      .search-input:focus-visible { outline: 0; }
+      .search-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+      .search-clear {
+        display: none;
+        flex: 0 0 25px;
+        width: 25px;
+        height: 25px;
+        place-items: center;
+        border: 0;
+        border-radius: 8px;
+        background: rgba(255,255,255,.12);
+        color: #e6ecf9;
+        cursor: pointer;
+      }
+      .search-clear.visible { display: grid; }
+      .search-menu {
+        position: absolute;
+        z-index: 20;
+        top: calc(100% + 7px);
+        right: 0;
+        left: 0;
+        display: none;
+        overflow: hidden;
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        background: var(--paper);
+        box-shadow: 0 18px 48px rgba(18, 30, 58, .2);
+      }
+      .search-menu.open { display: block; }
+      .search-options { max-height: min(290px, 42vh); overflow: auto; }
+      .search-option {
+        display: block;
+        width: 100%;
+        padding: 11px 12px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--ink);
+        text-align: left;
+        cursor: pointer;
+      }
+      .search-option:hover, .search-option.selected { background: var(--accent-soft); color: var(--accent-ink); }
+      .search-option small { display: block; margin-top: 3px; color: #8a94a9; font-size: 10px; }
+      .search-empty { padding: 12px; color: var(--muted); font-size: 12px; }
+      .section { margin-top: 25px; }
+      .week-head { justify-content: space-between; margin-bottom: 13px; }
+      .week-nav { display: flex; align-items: center; gap: 10px; }
+      .week-title { min-width: 132px; text-align: center; font-size: 14px; font-weight: 730; letter-spacing: -.02em; }
+      .plain-icon {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--paper);
+        color: #58647c;
+        cursor: pointer;
+        transition: .18s ease;
+      }
+      .plain-icon:hover { border-color: #e1c4cd; color: var(--blue); }
+      .today-button, .quick-button {
+        min-height: 34px;
+        padding: 0 12px;
+        border: 1px solid #efdee3;
+        border-radius: 11px;
+        background: var(--accent-soft);
+        color: var(--accent-ink);
+        font-size: 11px;
+        font-weight: 680;
+        cursor: pointer;
+      }
+      .day-strip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+      .day-button {
+        display: flex;
+        min-height: 67px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        border: 1px solid transparent;
+        border-radius: 17px;
+        background: transparent;
+        color: #778198;
+        cursor: pointer;
+        transition: background .18s, transform .18s, border-color .18s;
+      }
+      .day-button:hover { transform: translateY(-1px); background: #fff; }
+      .day-button.active { border-color: var(--navy); background: var(--navy); color: #fff; box-shadow: 0 8px 18px rgba(72,20,39,.18); }
+      .day-button.today:not(.active) { border-color: #efdce2; background: var(--accent-soft); color: var(--accent-ink); }
+      .day-name { font-size: 10px; font-weight: 630; }
+      .day-number { font-size: 17px; font-weight: 760; }
+      .quick-actions { gap: 8px; margin-top: 10px; }
+      .quick-button { min-height: 30px; padding: 0 10px; border-color: transparent; background: transparent; color: #858ea3; }
+      .quick-button:hover { background: var(--accent-soft); color: var(--accent-ink); }
+      .schedule-card {
+        overflow: hidden;
+        min-height: 210px;
+        margin-top: 23px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: var(--paper);
+        box-shadow: 0 10px 28px rgba(31, 45, 80, .045);
+      }
+      .section-head { justify-content: space-between; gap: 10px; padding: 20px 20px 17px; }
+      .date-heading { margin: 0; font-size: 18px; font-weight: 760; letter-spacing: -.04em; }
+      .date-caption { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+      .count-pill {
+        flex: 0 0 auto;
+        padding: 7px 10px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: var(--surface-soft);
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+      }
+      .count-pill.has-lessons { border-color: #ecdce2; background: var(--success-soft); color: var(--success-ink); }
+      .lesson-list { padding: 0 12px 12px; }
+      .lesson {
+        position: relative;
+        display: grid;
+        grid-template-columns: 38px minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+        padding: 14px 9px;
+        border-top: 1px solid var(--line);
+      }
+      .lesson:first-child { border-top: 0; }
+      .lesson.current { margin: 4px 0; border: 1px solid #e6ccd5; border-radius: 16px; background: var(--surface-soft); }
+      .lesson-time { padding-top: 2px; color: #67738c; font-size: 9px; font-weight: 680; line-height: 1.55; white-space: nowrap; }
+      .lesson-side { display: flex; min-width: 55px; flex-direction: column; align-items: flex-end; gap: 7px; }
+      .lesson-number { display: inline-grid; min-width: 34px; min-height: 34px; place-items: center; border-radius: 12px; background: var(--accent-soft); color: var(--accent-ink); font-size: 15px; font-weight: 790; }
+      .lesson-number.special { background: var(--success-soft); color: var(--success-ink); font-size: 12px; }
+      .lesson-main { min-width: 0; }
+      .lesson-name { margin: 1px 0 7px; color: var(--ink); font-size: 13px; font-weight: 710; line-height: 1.4; overflow-wrap: anywhere; }
+      .lesson-meta { flex-wrap: wrap; gap: 5px 12px; color: var(--muted); font-size: 10px; }
+      .meta-item { display: inline-flex; min-width: 0; align-items: center; gap: 5px; }
+      .meta-item svg { flex: 0 0 auto; color: #a1aabc; }
+      .lesson-tag { align-self: start; padding: 5px 7px; border-radius: 8px; background: #fff2df; color: #a96d14; font-size: 9px; font-weight: 720; white-space: nowrap; }
+      .lesson-tag.exam { background: #fff0ef; color: #c7514a; }
+      .lesson-tag.now { background: var(--success-soft); color: var(--success-ink); }
+      .empty-state, .loading-state, .error-state {
+        display: grid;
+        min-height: 205px;
+        align-content: center;
+        justify-items: center;
+        padding: 26px 22px;
+        text-align: center;
+      }
+      .state-icon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 16px; background: var(--surface-soft); color: var(--muted); }
+      .state-title { margin: 13px 0 5px; font-size: 14px; font-weight: 730; }
+      .state-description { max-width: 300px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+      .retry-button { margin-top: 12px; padding: 8px 12px; border: 0; border-radius: 10px; background: var(--accent-soft); color: var(--accent-ink); font-size: 11px; font-weight: 700; cursor: pointer; }
+      .spinner { width: 25px; height: 25px; border: 2px solid var(--line); border-top-color: var(--blue); border-radius: 50%; animation: spin .75s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .modal-backdrop { position: fixed; z-index: 30; inset: 0; display: none; align-items: end; justify-content: center; padding: 16px; background: rgba(12, 19, 36, .52); backdrop-filter: blur(5px); }
+      .modal-backdrop.open { display: flex; }
+      .modal {
+        width: min(100%, 560px);
+        max-height: min(84vh, 760px);
+        overflow: auto;
+        padding: 20px;
+        border-radius: 24px;
+        background: var(--paper);
+        box-shadow: 0 24px 70px rgba(14, 23, 45, .28);
+        animation: rise .2s ease-out;
+      }
+      @keyframes rise { from { transform: translateY(14px); opacity: .7; } to { transform: translateY(0); opacity: 1; } }
+      .modal-head { justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+      .modal-head h2 { margin: 0; font-size: 19px; letter-spacing: -.04em; }
+      .modal-close { display: grid; width: 35px; height: 35px; place-items: center; border: 0; border-radius: 11px; background: #f1f3f8; color: #68748a; cursor: pointer; }
+      .bell-block { margin-top: 12px; }
+      .bell-block h3 { margin: 0 0 8px; color: #78829a; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+      .bell-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #eef0f5; font-size: 12px; }
+      .bell-row span:first-child { color: #46516a; }
+      .bell-row strong { color: var(--ink); font-size: 11px; white-space: nowrap; }
+      .bell-break { padding: 8px 10px; border-radius: 10px; background: #f6f7fa; color: #858ea1; font-size: 10px; text-align: center; }
+      .theme-toggle .sun-icon { display: none; }
+      .theme-toggle .moon-icon { display: block; }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --ink: #f1e8eb;
+        --muted: #b7a7ac;
+        --line: #392b30;
+        --paper: #1d171a;
+        --canvas: #100d0f;
+        --navy: #55172c;
+        --blue: #e3a0b4;
+        --mint: #e6aabe;
+        --surface-soft: #281c21;
+        --accent-soft: #352129;
+        --accent-ink: #efb4c5;
+        --success-soft: #302027;
+        --success-ink: #efb4c5;
+      }
+      :root[data-theme="dark"] body {
+        background:
+          radial-gradient(ellipse at 86% 0, rgba(132, 38, 67, .13), transparent 34rem),
+          var(--canvas);
+      }
+      :root[data-theme="dark"] .hero {
+        background:
+          radial-gradient(ellipse at 86% 4%, rgba(230, 170, 190, .12), transparent 16rem),
+          linear-gradient(145deg, #54172c, #290e19);
+        box-shadow: 0 8px 24px rgba(0,0,0,.28);
+      }
+      :root[data-theme="dark"] .icon-button { border-color: rgba(255,255,255,.13); background: rgba(255,255,255,.07); }
+      :root[data-theme="dark"] .icon-button:hover { background: rgba(255,255,255,.14); }
+      :root[data-theme="dark"] .search-modes { border-color: rgba(255,255,255,.08); background: rgba(0,0,0,.22); }
+      :root[data-theme="dark"] .search-mode { color: #c1aeb5; }
+      :root[data-theme="dark"] .search-mode.active { background: #f2e9ec; color: #33131f; }
+      :root[data-theme="dark"] .search-row { border-color: rgba(255,255,255,.13); background: rgba(255,255,255,.06); }
+      :root[data-theme="dark"] .search-row:focus-within { border-color: rgba(227,160,180,.7); background: rgba(255,255,255,.09); }
+      :root[data-theme="dark"] .search-input { color: #fff; }
+      :root[data-theme="dark"] .search-input::placeholder { color: #c4b2b8; }
+      :root[data-theme="dark"] .search-clear { background: rgba(255,255,255,.1); color: #f1e8eb; }
+      :root[data-theme="dark"] .search-menu { box-shadow: 0 18px 48px rgba(0,0,0,.42); }
+      :root[data-theme="dark"] .search-option:hover,
+      :root[data-theme="dark"] .search-option.selected { background: #352129; color: #efb4c5; }
+      :root[data-theme="dark"] .search-option small { color: #b7a7ac; }
+      :root[data-theme="dark"] .plain-icon { color: #d4c6ca; }
+      :root[data-theme="dark"] .plain-icon:hover { border-color: #684050; color: #efb4c5; }
+      :root[data-theme="dark"] .today-button { border-color: #55313e; }
+      :root[data-theme="dark"] .day-button { color: #b7a7ac; }
+      :root[data-theme="dark"] .day-button:hover { background: #241a1e; }
+      :root[data-theme="dark"] .day-button.active { border-color: #55172c; background: #55172c; color: #fff; }
+      :root[data-theme="dark"] .day-button.today:not(.active) { border-color: #55313e; background: #352129; color: #efb4c5; }
+      :root[data-theme="dark"] .quick-button { color: #b7a7ac; }
+      :root[data-theme="dark"] .quick-button:hover { background: #352129; color: #efb4c5; }
+      :root[data-theme="dark"] .schedule-card { box-shadow: 0 10px 28px rgba(0,0,0,.18); }
+      :root[data-theme="dark"] .count-pill { color: #c2b4b8; }
+      :root[data-theme="dark"] .lesson-time { color: #cfbfc4; }
+      :root[data-theme="dark"] .meta-item svg { color: #aa939b; }
+      :root[data-theme="dark"] .lesson-tag { background: #392b20; color: #e9bd7d; }
+      :root[data-theme="dark"] .lesson-tag.exam { background: #3b2024; color: #f1a3a0; }
+      :root[data-theme="dark"] .modal-backdrop { background: rgba(0,0,0,.68); }
+      :root[data-theme="dark"] .modal-close { background: #302328; color: #d8c8cd; }
+      :root[data-theme="dark"] .bell-block h3 { color: #b7a7ac; }
+      :root[data-theme="dark"] .bell-row { border-color: var(--line); }
+      :root[data-theme="dark"] .bell-row span:first-child { color: #d2c4c8; }
+      :root[data-theme="dark"] .bell-break { background: #292125; color: #b7a7ac; }
+      :root[data-theme="dark"] .theme-toggle .moon-icon { display: none; }
+      :root[data-theme="dark"] .theme-toggle .sun-icon { display: block; }
+      @media (min-width: 620px) {
+        .shell { padding-right: 28px; padding-left: 28px; }
+        .hero { margin-right: -28px; margin-left: -28px; padding-right: 28px; padding-left: 28px; }
+        .section { margin-top: 30px; }
+        .modal-backdrop { align-items: center; }
+      }
+      @media (max-width: 390px) {
+        .shell { padding-right: 14px; padding-left: 14px; }
+        .hero { margin-right: -14px; margin-left: -14px; padding-right: 14px; padding-left: 14px; }
+        .day-strip { gap: 3px; }
+        .lesson { grid-template-columns: 36px minmax(0, 1fr) auto; gap: 8px; padding-right: 6px; padding-left: 6px; }
+        .lesson-time { font-size: 9px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="hero">
+        <div class="topline">
+          <div class="app-identity">
+            <h1 class="app-name">Расписание СГК</h1>
+            <a class="app-handle" href="https://t.me/sgk1_robot" target="_blank" rel="noopener noreferrer">@sgk1_robot</a>
+          </div>
+          <div class="hero-tools">
+            <button class="icon-button theme-toggle" id="themeToggle" type="button" aria-label="Включить тёмную тему" title="Тёмная тема" aria-pressed="false">
+              <svg class="moon-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.6 8.6 0 1 0 20.2 15.1Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg class="sun-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <button class="icon-button" id="refreshButton" type="button" aria-label="Обновить расписание" title="Обновить">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M20 7v5h-5M4 17v-5h5m-4.1-2a7.5 7.5 0 0 1 12.5-3L20 12M4 12l2.6 5a7.5 7.5 0 0 0 12.5-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="icon-button" id="bellButton" type="button" aria-label="Расписание звонков" title="Расписание звонков">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="search-modes" role="tablist" aria-label="Искать расписание">
+          <button class="search-mode active" type="button" role="tab" aria-selected="true" data-mode="group">Группа</button>
+          <button class="search-mode" type="button" role="tab" aria-selected="false" data-mode="teacher">Преподаватель</button>
+          <button class="search-mode" type="button" role="tab" aria-selected="false" data-mode="room">Кабинет</button>
+        </div>
+        <div class="search-picker">
+          <div class="search-row">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.7"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <input class="search-input" id="scheduleSearch" type="search" role="combobox" aria-label="Поиск группы, преподавателя или кабинета" aria-autocomplete="list" aria-expanded="false" aria-controls="searchOptions" placeholder="Найти группу…" autocomplete="off" />
+            <button class="search-clear" id="clearSearch" type="button" aria-label="Очистить поиск">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+          <div class="search-menu" id="searchMenu">
+            <div class="search-options" id="searchOptions" role="listbox" aria-label="Результаты поиска"></div>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="section" aria-label="Выбор дня">
+          <div class="week-head">
+            <div class="week-nav">
+              <button class="plain-icon" id="previousWeek" type="button" aria-label="Предыдущая неделя">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="m15 18-6-6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="week-title" id="weekTitle">Загрузка…</div>
+              <button class="plain-icon" id="nextWeek" type="button" aria-label="Следующая неделя">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <button class="today-button" id="todayButton" type="button">Сегодня</button>
+          </div>
+          <div class="day-strip" id="dayStrip"></div>
+          <div class="quick-actions">
+            <button class="quick-button" id="tomorrowButton" type="button">Завтра →</button>
+          </div>
+        </section>
+
+        <section class="schedule-card" aria-live="polite">
+          <div id="scheduleContent"></div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="bellModal" role="dialog" aria-modal="true" aria-labelledby="bellTitle">
+      <div class="modal">
+        <div class="modal-head">
+          <h2 id="bellTitle">Расписание звонков</h2>
+          <button class="modal-close" id="closeBell" type="button" aria-label="Закрыть">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="bell-block">
+          <h3>Понедельник</h3>
+          <div class="bell-row"><span>Классный час</span><strong>08:00 – 08:45</strong></div>
+          <div class="bell-row"><span>1 пара</span><strong>08:55 – 10:35</strong></div>
+          <div class="bell-row"><span>2 пара</span><strong>10:45 – 12:45</strong></div>
+          <div class="bell-row"><span>3 пара</span><strong>12:55 – 14:35</strong></div>
+          <div class="bell-row"><span>4 пара</span><strong>14:45 – 16:25</strong></div>
+          <div class="bell-row"><span>5 пара</span><strong>16:35 – 18:15</strong></div>
+          <div class="bell-row"><span>6 пара</span><strong>18:25 – 20:05</strong></div>
+        </div>
+        <div class="bell-block">
+          <h3>Вторник – суббота</h3>
+          <div class="bell-row"><span>1 пара</span><strong>08:00 – 09:40</strong></div>
+          <div class="bell-row"><span>2 пара</span><strong>09:50 – 11:30</strong></div>
+          <div class="bell-break">Большая перемена · 30 минут</div>
+          <div class="bell-row"><span>3 пара</span><strong>12:00 – 13:40</strong></div>
+          <div class="bell-row"><span>4 пара</span><strong>13:50 – 15:30</strong></div>
+          <div class="bell-row"><span>5 пара</span><strong>15:40 – 17:20</strong></div>
+          <div class="bell-row"><span>6 пара</span><strong>17:30 – 19:10</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        const API = "https://mfc.samgk.ru";
+        const GROUPS_URL = `${API}/api/groups`;
+        const TEACHERS_URL = `${API}/api/teachers`;
+        const ROOMS_URL = `${API}/api/cabs`;
+        const SCHEDULE_URL = `${API}/schedule/api/get-rasp`;
+        const STORAGE_KEY = "samgk-schedule-selection";
+        const THEME_KEY = "samgk-schedule-theme";
+        const SEARCH_MODES = {
+          group: { label: "Группа", placeholder: "Найти группу…" },
+          teacher: { label: "Преподаватель", placeholder: "Найти преподавателя…" },
+          room: { label: "Кабинет", placeholder: "Найти кабинет…" }
+        };
+        const DEFAULT_GROUP = { id: 810, name: "ИС-25-03" };
+        const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+        const standardTimes = {
+          1: "08:00 – 09:40", 2: "09:50 – 11:30", 3: "12:00 – 13:40",
+          4: "13:50 – 15:30", 5: "15:40 – 17:20", 6: "17:30 – 19:10"
+        };
+        const mondayTimes = {
+          1: "08:55 – 10:35", 2: "10:45 – 12:45", 3: "12:55 – 14:35",
+          4: "14:45 – 16:25", 5: "16:35 – 18:15", 6: "18:25 – 20:05"
+        };
+        const elements = {
+          searchInput: document.querySelector("#scheduleSearch"),
+          searchMenu: document.querySelector("#searchMenu"),
+          searchOptions: document.querySelector("#searchOptions"),
+          clearSearch: document.querySelector("#clearSearch"),
+          dayStrip: document.querySelector("#dayStrip"),
+          weekTitle: document.querySelector("#weekTitle"),
+          scheduleContent: document.querySelector("#scheduleContent"),
+          bellModal: document.querySelector("#bellModal")
+        };
+        const state = {
+          mode: "group",
+          groups: [],
+          teachers: [],
+          rooms: [],
+          selection: { ...DEFAULT_GROUP },
+          selections: { group: { ...DEFAULT_GROUP }, teacher: null, room: null },
+          selectedDate: nextClassDate(new Date()),
+          requestId: 0
+        };
+
+        function atLocalMidnight(date) {
+          return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        }
+
+        function addDays(date, amount) {
+          const result = atLocalMidnight(date);
+          result.setDate(result.getDate() + amount);
+          return result;
+        }
+
+        function applyTheme(theme) {
+          const isDark = theme === "dark";
+          document.documentElement.dataset.theme = isDark ? "dark" : "light";
+          document.querySelector('meta[name="theme-color"]').content = isDark ? "#100d0f" : "#741f3c";
+          const toggle = document.querySelector("#themeToggle");
+          toggle.setAttribute("aria-pressed", String(isDark));
+          toggle.setAttribute("aria-label", isDark ? "Включить светлую тему" : "Включить тёмную тему");
+          toggle.title = isDark ? "Светлая тема" : "Тёмная тема";
+          try {
+            localStorage.setItem(THEME_KEY, isDark ? "dark" : "light");
+          } catch (error) {
+            console.warn("Не удалось сохранить выбранную тему.", error);
+          }
+          const telegram = window.Telegram?.WebApp;
+          if (telegram?.isVersionAtLeast?.("6.1")) {
+            telegram.setHeaderColor?.(isDark ? "#100d0f" : "#741f3c");
+            telegram.setBackgroundColor?.(isDark ? "#100d0f" : "#faf6f7");
+          }
+        }
+
+        function mondayOf(date) {
+          const result = atLocalMidnight(date);
+          const day = result.getDay();
+          result.setDate(result.getDate() - (day === 0 ? 6 : day - 1));
+          return result;
+        }
+
+        function nextClassDate(date) {
+          const clean = atLocalMidnight(date);
+          return clean.getDay() === 0 ? addDays(clean, 1) : clean;
+        }
+
+        function dateKey(date) {
+          return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+        }
+
+        function formatDate(date, options) {
+          return new Intl.DateTimeFormat("ru-RU", options).format(date);
+        }
+
+        function weekLabel(date) {
+          const start = mondayOf(date);
+          const end = addDays(start, 5);
+          const sameMonth = start.getMonth() === end.getMonth();
+          const first = formatDate(start, { day: "numeric", month: sameMonth ? undefined : "short" });
+          const last = formatDate(end, { day: "numeric", month: "short" });
+          return `${first} – ${last}`;
+        }
+
+        function dateHasLessonDay(date) {
+          const day = date.getDay();
+          return day >= 1 && day <= 6;
+        }
+
+        function changeSelectedDate(date) {
+          const candidate = atLocalMidnight(date);
+          if (!dateHasLessonDay(candidate)) {
+            return;
+          }
+          state.selectedDate = candidate;
+          renderCalendar();
+          loadSchedule();
+        }
+
+        function renderCalendar() {
+          const monday = mondayOf(state.selectedDate);
+          elements.weekTitle.textContent = weekLabel(state.selectedDate);
+          elements.dayStrip.replaceChildren();
+          for (let index = 0; index < 6; index += 1) {
+            const date = addDays(monday, index);
+            const button = document.createElement("button");
+            button.className = "day-button";
+            button.type = "button";
+            button.setAttribute("aria-label", formatDate(date, { weekday: "long", day: "numeric", month: "long" }));
+            if (dateKey(date) === dateKey(state.selectedDate)) button.classList.add("active");
+            if (dateKey(date) === dateKey(new Date())) button.classList.add("today");
+            const name = document.createElement("span");
+            name.className = "day-name";
+            name.textContent = weekDays[index];
+            const number = document.createElement("span");
+            number.className = "day-number";
+            number.textContent = String(date.getDate());
+            button.append(name, number);
+            button.addEventListener("click", () => changeSelectedDate(date));
+            elements.dayStrip.append(button);
+          }
+        }
+
+        function safeArray(value) {
+          if (Array.isArray(value)) return value;
+          if (typeof value === "string" && value !== "") return [value];
+          return [];
+        }
+
+        function unpackLessons(payload) {
+          if (Array.isArray(payload) && payload.length === 0) {
+            return [];
+          }
+          if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+            throw new Error("Сайт вернул расписание в неизвестном формате.");
+          }
+          const seen = new Set();
+          const lessons = [];
+          const visit = value => {
+            if (Array.isArray(value)) {
+              for (const item of value) visit(item);
+              return;
+            }
+            if (!value || typeof value !== "object") return;
+            if (Object.hasOwn(value, "pair") && Object.hasOwn(value, "disciplineName")) {
+              if (value.invisible === true || Number(value.invisible) > 0) return;
+              const uniqueKey = [
+                value.group, value.id, value.pair, value.number, value.discipline,
+                safeArray(value.teacher).join(","), safeArray(value.cab).join(","),
+                value.zachet, value.exam
+              ].join("|");
+              if (!seen.has(uniqueKey)) {
+                seen.add(uniqueKey);
+                lessons.push(value);
+              }
+              return;
+            }
+            for (const child of Object.values(value)) visit(child);
+          };
+          visit(payload);
+          return lessons;
+        }
+
+        function lessonNumber(lesson) {
+          const pair = Number(lesson.pair);
+          const part = Number(lesson.number);
+          return part > 0 ? `${pair}.${part}` : String(pair);
+        }
+
+        function groupLessons(lessons) {
+          const groups = new Map();
+          for (const lesson of lessons) {
+            const key = state.mode === "group"
+              ? `${lesson.pair}.${lesson.number}`
+              : `${lesson.group}.${lesson.pair}.${lesson.number}`;
+            if (!groups.has(key)) {
+              groups.set(key, {
+                pair: Number(lesson.pair),
+                number: Number(lesson.number),
+                name: String(lesson.disciplineName || "Занятие"),
+                group: String(lesson.groupName || ""),
+                teachers: [],
+                rooms: [],
+                zachet: false,
+                exam: false
+              });
+            }
+            const group = groups.get(key);
+            const name = String(lesson.disciplineName || "Занятие");
+            if (!group.name.split(" · ").includes(name)) {
+              group.name += ` · ${name}`;
+            }
+            const teachers = safeArray(lesson.teacherName);
+            for (let index = 0; index < teachers.length; index += 1) {
+              const label = safeArray(lesson.facts_teacher)[index] || teachers[index];
+              if (label && !group.teachers.includes(String(label))) group.teachers.push(String(label));
+            }
+            for (const room of safeArray(lesson.cab)) {
+              if (room && !group.rooms.includes(String(room))) group.rooms.push(String(room));
+            }
+            group.zachet ||= Number(lesson.zachet) > 0;
+            group.exam ||= Number(lesson.exam) > 0;
+          }
+          return [...groups.values()].sort((a, b) =>
+            a.pair - b.pair || a.number - b.number || a.group.localeCompare(b.group, "ru")
+          );
+        }
+
+        function icon(name) {
+          if (name === "teacher") {
+            return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 20v-1.5a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4V20m8-9a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+          }
+          if (name === "group") {
+            return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20m7-9a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm6-7.5a4 4 0 0 1 0 7.7m2 3.8h1a3 3 0 0 1 3 3V20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+          }
+          return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v15M4 9h16M8 4v5m8-5v5M8 13h2m4 0h2m-8 3h2m4 0h2M3 20h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        }
+
+        function addMeta(container, label, iconName) {
+          if (!label) return;
+          const item = document.createElement("span");
+          item.className = "meta-item";
+          item.innerHTML = icon(iconName);
+          const text = document.createElement("span");
+          text.textContent = label;
+          item.append(text);
+          container.append(item);
+        }
+
+        function isCurrentLesson(time, date) {
+          if (dateKey(date) !== dateKey(new Date())) return false;
+          const match = time.match(/^(\d{2}):(\d{2})/);
+          if (!match) return false;
+          const now = new Date();
+          const minutes = now.getHours() * 60 + now.getMinutes();
+          const start = Number(match[1]) * 60 + Number(match[2]);
+          const endText = time.match(/–\s*(\d{2}):(\d{2})$/);
+          if (!endText) return false;
+          const end = Number(endText[1]) * 60 + Number(endText[2]);
+          return minutes >= start && minutes < end;
+        }
+
+        function makeLessonCard(lesson, date) {
+          const time = lesson.pair === 0 ? "08:00 – 08:45" : date.getDay() === 1 ? mondayTimes[lesson.pair] : standardTimes[lesson.pair];
+          const card = document.createElement("article");
+          card.className = "lesson";
+          if (time && isCurrentLesson(time, date)) card.classList.add("current");
+          const number = document.createElement("div");
+          number.className = "lesson-number";
+          if (lesson.pair === 0) number.classList.add("special");
+          number.textContent = lesson.pair === 0 ? "КЧ" : lesson.number > 0 ? lessonNumber(lesson) : String(lesson.pair);
+          const main = document.createElement("div");
+          main.className = "lesson-main";
+          const name = document.createElement("h3");
+          name.className = "lesson-name";
+          name.textContent = lesson.name;
+          main.append(name);
+          const meta = document.createElement("div");
+          meta.className = "lesson-meta";
+          if (state.mode !== "group") addMeta(meta, lesson.group, "group");
+          addMeta(meta, lesson.teachers.join(", "), "teacher");
+          addMeta(meta, lesson.rooms.join(", "), "room");
+          main.append(meta);
+          card.append(number, main);
+          const side = document.createElement("div");
+          side.className = "lesson-side";
+          if (time) {
+            const timeElement = document.createElement("div");
+            timeElement.className = "lesson-time";
+            timeElement.textContent = time;
+            side.append(timeElement);
+          }
+          const tag = document.createElement("span");
+          if (lesson.exam) {
+            tag.className = "lesson-tag exam";
+            tag.textContent = "Экзамен";
+          } else if (lesson.zachet) {
+            tag.className = "lesson-tag";
+            tag.textContent = "Зачёт";
+          } else if (card.classList.contains("current")) {
+            tag.className = "lesson-tag now";
+            tag.textContent = "Сейчас";
+          }
+          if (tag.textContent) side.append(tag);
+          if (side.childElementCount > 0) card.append(side);
+          return card;
+        }
+
+        function createState(iconMarkup, title, description, className = "empty-state") {
+          const wrapper = document.createElement("div");
+          wrapper.className = className;
+          const iconContainer = document.createElement("div");
+          iconContainer.className = "state-icon";
+          iconContainer.innerHTML = iconMarkup;
+          const heading = document.createElement("h2");
+          heading.className = "state-title";
+          heading.textContent = title;
+          const paragraph = document.createElement("p");
+          paragraph.className = "state-description";
+          paragraph.textContent = description;
+          wrapper.append(iconContainer, heading, paragraph);
+          return wrapper;
+        }
+
+        function renderError(message) {
+          const content = createState(
+            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 8v5m0 3h.01M10.3 3.8 2.9 17a2 2 0 0 0 1.7 3h14.8a2 2 0 0 0 1.7-3l-7.4-13.2a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            "Не удалось загрузить",
+            message,
+            "error-state"
+          );
+          const retry = document.createElement("button");
+          retry.className = "retry-button";
+          retry.type = "button";
+          retry.textContent = "Попробовать ещё";
+          retry.addEventListener("click", loadSchedule);
+          content.append(retry);
+          renderScheduleFrame(content);
+          const count = elements.scheduleContent.querySelector(".count-pill");
+          count.textContent = "Ошибка";
+        }
+
+        function renderScheduleFrame(body) {
+          const selected = state.selectedDate;
+          const header = document.createElement("div");
+          header.className = "section-head";
+          const titleWrap = document.createElement("div");
+          const title = document.createElement("h2");
+          title.className = "date-heading";
+          const formattedTitle = formatDate(selected, { weekday: "long", day: "numeric", month: "long" });
+          title.textContent = formattedTitle.charAt(0).toLocaleUpperCase("ru") + formattedTitle.slice(1);
+          const caption = document.createElement("p");
+          caption.className = "date-caption";
+          caption.textContent = `${SEARCH_MODES[state.mode].label}: ${state.selection.name}`;
+          titleWrap.append(title, caption);
+          const count = document.createElement("span");
+          count.className = "count-pill";
+          count.textContent = "Загрузка";
+          header.append(titleWrap, count);
+          elements.scheduleContent.replaceChildren(header, body);
+        }
+
+        function renderSchedule(lessons) {
+          const items = groupLessons(lessons);
+          const list = document.createElement("div");
+          list.className = "lesson-list";
+          const hasMondayClass = state.mode === "group" && state.selectedDate.getDay() === 1 && items.length > 0;
+          if (hasMondayClass) {
+            list.append(makeLessonCard({
+              pair: 0, number: 0, name: "Классный час «Разговоры о важном»",
+              teachers: items[0].teachers, rooms: items[0].rooms, zachet: false, exam: false
+            }, state.selectedDate));
+          }
+          if (items.length === 0) {
+            const noLessons = createState(
+              '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 3v3m8-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13H4V6a1 1 0 0 1 1-1Zm3 8h2m4 0h2m-8 3h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+              "На этот день занятий нет",
+              "Можно выдохнуть — или заглянуть в другой день недели."
+            );
+            list.append(noLessons);
+          } else {
+            for (const lesson of items) list.append(makeLessonCard(lesson, state.selectedDate));
+          }
+          renderScheduleFrame(list);
+          const count = elements.scheduleContent.querySelector(".count-pill");
+          count.classList.toggle("has-lessons", items.length > 0);
+          const visibleCount = items.length + Number(hasMondayClass);
+          count.textContent = visibleCount > 0
+            ? `${visibleCount} ${plural(visibleCount, ["пара", "пары", "пар"])}`
+            : "Нет пар";
+        }
+
+        function plural(number, forms) {
+          const remainder10 = number % 10;
+          const remainder100 = number % 100;
+          if (remainder10 === 1 && remainder100 !== 11) return forms[0];
+          if (remainder10 >= 2 && remainder10 <= 4 && (remainder100 < 12 || remainder100 > 14)) return forms[1];
+          return forms[2];
+        }
+
+        async function loadSchedule() {
+          const requestId = ++state.requestId;
+          if (!state.selection?.id) {
+            const emptySelection = createState(
+              '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.7"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+              "Выберите для поиска",
+              "Начните вводить название группы, преподавателя или кабинета."
+            );
+            renderScheduleFrame(emptySelection);
+            elements.scheduleContent.querySelector(".count-pill").textContent = "Поиск";
+            return;
+          }
+          const loading = createState(
+            '<div class="spinner" role="status" aria-label="Загрузка"></div>',
+            "Ищем расписание",
+            "Загружаем пары с сайта колледжа.",
+            "loading-state"
+          );
+          renderScheduleFrame(loading);
+          try {
+            const url = new URL(SCHEDULE_URL);
+            url.searchParams.set("date", dateKey(state.selectedDate));
+            const parameter = state.mode === "room" ? "cab" : state.mode;
+            url.searchParams.set(parameter, String(state.selection.id));
+            const response = await fetch(url, { headers: { Accept: "application/json" } });
+            if (!response.ok) throw new Error(`Сайт расписания ответил с ошибкой (${response.status}).`);
+            const payload = await response.json();
+            if (requestId !== state.requestId) return;
+            renderSchedule(unpackLessons(payload));
+          } catch (error) {
+            if (requestId !== state.requestId) return;
+            renderError(error instanceof Error ? error.message : "Проверьте интернет и попробуйте ещё раз.");
+          }
+        }
+
+        function normalizeSearch(value) {
+          return String(value)
+            .normalize("NFKC")
+            .toLocaleLowerCase("ru")
+            .replace(/ё/g, "е")
+            .replace(/[\s\-_./]+/g, "");
+        }
+
+        function entityList() {
+          if (state.mode === "teacher") return state.teachers;
+          if (state.mode === "room") return state.rooms;
+          return state.groups;
+        }
+
+        function renderSearchOptions(filter = "") {
+          const query = normalizeSearch(filter);
+          const entities = entityList();
+          elements.searchOptions.replaceChildren();
+          if (entities.length === 0) {
+            const status = document.createElement("div");
+            status.className = "search-empty";
+            status.textContent = state.optionsLoading ? "Загружаем список…" : "Список не загружен";
+            elements.searchOptions.append(status);
+            return;
+          }
+
+          const matches = entities
+            .filter(entity => normalizeSearch(entity.name).includes(query))
+            .sort((a, b) => {
+              const aName = normalizeSearch(a.name);
+              const bName = normalizeSearch(b.name);
+              const aPrefix = query && aName.startsWith(query) ? 0 : 1;
+              const bPrefix = query && bName.startsWith(query) ? 0 : 1;
+              return aPrefix - bPrefix || a.name.localeCompare(b.name, "ru");
+            })
+            .slice(0, 60);
+
+          if (matches.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "search-empty";
+            empty.textContent = "Ничего не найдено";
+            elements.searchOptions.append(empty);
+            return;
+          }
+
+          for (const entity of matches) {
+            const option = document.createElement("button");
+            option.className = "search-option";
+            option.type = "button";
+            option.setAttribute("role", "option");
+            option.setAttribute("aria-selected", String(entity.id === state.selection.id));
+            if (entity.id === state.selection.id) option.classList.add("selected");
+            option.textContent = entity.name;
+            option.addEventListener("click", () => selectEntity(entity));
+            elements.searchOptions.append(option);
+          }
+        }
+
+        function openSearchMenu() {
+          elements.searchMenu.classList.add("open");
+          elements.searchInput.setAttribute("aria-expanded", "true");
+          renderSearchOptions(elements.searchInput.value);
+        }
+
+        function closeSearchMenu() {
+          elements.searchMenu.classList.remove("open");
+          elements.searchInput.setAttribute("aria-expanded", "false");
+        }
+
+        function updateSearchMode(mode, { preserveSelection = false } = {}) {
+          if (!Object.hasOwn(SEARCH_MODES, mode)) return;
+          state.mode = mode;
+          for (const button of document.querySelectorAll(".search-mode")) {
+            const active = button.dataset.mode === mode;
+            button.classList.toggle("active", active);
+            button.setAttribute("aria-selected", String(active));
+          }
+          elements.searchInput.placeholder = SEARCH_MODES[mode].placeholder;
+          if (!preserveSelection) {
+            state.selection = state.selections[mode]
+              || (mode === "group" && state.groups.find(group => group.id === DEFAULT_GROUP.id))
+              || { id: "", name: "" };
+          }
+          state.selections[mode] = state.selection.id ? state.selection : null;
+          elements.searchInput.value = state.selection.name;
+          elements.clearSearch.classList.toggle("visible", Boolean(state.selection.name));
+          closeSearchMenu();
+          persistSelection();
+          renderSearchOptions();
+          loadSchedule();
+        }
+
+        function persistSelection() {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+              mode: state.mode,
+              id: state.selection.id,
+              name: state.selection.name,
+              selections: state.selections
+            }));
+          } catch (error) {
+            console.warn("Не удалось сохранить выбранный поиск.", error);
+          }
+        }
+
+        function selectEntity(entity) {
+          state.selection = entity;
+          state.selections[state.mode] = entity;
+          elements.searchInput.value = entity.name;
+          elements.clearSearch.classList.add("visible");
+          closeSearchMenu();
+          persistSelection();
+          loadSchedule();
+        }
+
+        async function fetchJson(url, label) {
+          const response = await fetch(url, { headers: { Accept: "application/json" } });
+          if (!response.ok) throw new Error(`${label}: ошибка сервера (${response.status}).`);
+          return response.json();
+        }
+
+        async function loadSearchOptions() {
+          state.optionsLoading = true;
+          renderSearchOptions();
+          const results = await Promise.allSettled([
+            fetchJson(GROUPS_URL, "Не удалось загрузить группы"),
+            fetchJson(TEACHERS_URL, "Не удалось загрузить преподавателей"),
+            fetchJson(ROOMS_URL, "Не удалось загрузить кабинеты")
+          ]);
+          state.optionsLoading = false;
+          const errors = [];
+          const [groupsResult, teachersResult, roomsResult] = results;
+          if (groupsResult.status === "fulfilled" && Array.isArray(groupsResult.value)) {
+            state.groups = groupsResult.value
+              .filter(item => item && Number.isFinite(Number(item.id)) && typeof item.name === "string")
+              .map(item => ({ id: Number(item.id), name: item.name }));
+          } else {
+            errors.push(groupsResult.status === "rejected" ? groupsResult.reason.message : "Список групп имеет неверный формат.");
+          }
+          if (teachersResult.status === "fulfilled" && Array.isArray(teachersResult.value)) {
+            state.teachers = teachersResult.value
+              .filter(item => item && Number.isFinite(Number(item.id)) && typeof item.name === "string")
+              .map(item => ({ id: Number(item.id), name: item.name }));
+          } else {
+            errors.push(teachersResult.status === "rejected" ? teachersResult.reason.message : "Список преподавателей имеет неверный формат.");
+          }
+          if (roomsResult.status === "fulfilled" && roomsResult.value && typeof roomsResult.value === "object" && !Array.isArray(roomsResult.value)) {
+            state.rooms = Object.entries(roomsResult.value)
+              .filter(([id, name]) => id && typeof name === "string")
+              .map(([id, name]) => ({ id, name }));
+          } else {
+            errors.push(roomsResult.status === "rejected" ? roomsResult.reason.message : "Список кабинетов имеет неверный формат.");
+          }
+
+          let stored = null;
+          try {
+            stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+          } catch (error) {
+            console.warn("Не удалось прочитать сохранённый поиск.", error);
+          }
+          if (stored && Object.hasOwn(SEARCH_MODES, stored.mode)) {
+            state.mode = stored.mode;
+            for (const mode of Object.keys(SEARCH_MODES)) {
+              const storedSelection = stored.selections?.[mode]
+                || (mode === stored.mode && stored.id ? { id: stored.id, name: stored.name } : null);
+              if (!storedSelection) continue;
+              const entities = mode === "group" ? state.groups : mode === "teacher" ? state.teachers : state.rooms;
+              state.selections[mode] = entities.find(item => String(item.id) === String(storedSelection.id))
+                || entities.find(item => item.name === storedSelection.name)
+                || null;
+            }
+          }
+          if (!state.selections.group || !state.groups.some(item => String(item.id) === String(state.selections.group.id))) {
+            state.selections.group = state.groups.find(item => item.id === DEFAULT_GROUP.id)
+              || state.groups[0]
+              || null;
+          }
+          state.selection = state.selections[state.mode] || (state.mode === "group" ? state.selections.group : null);
+          if (state.selection?.id && !entityList().some(item => String(item.id) === String(state.selection.id))) {
+            state.selections[state.mode] = null;
+            state.selection = null;
+          }
+          state.selection ||= { id: "", name: "" };
+          updateSearchMode(state.mode, { preserveSelection: true });
+          if (errors.length > 0) console.error("Не все списки для поиска загрузились:", errors.join(" "));
+        }
+
+        function changeSearchMode(mode) {
+          updateSearchMode(mode);
+          elements.searchInput.focus();
+          openSearchMenu();
+        }
+
+        document.querySelector("#previousWeek").addEventListener("click", () => {
+          changeSelectedDate(addDays(state.selectedDate, -7));
+        });
+        document.querySelector("#nextWeek").addEventListener("click", () => {
+          changeSelectedDate(addDays(state.selectedDate, 7));
+        });
+        document.querySelector("#todayButton").addEventListener("click", () => {
+          changeSelectedDate(nextClassDate(new Date()));
+        });
+        document.querySelector("#tomorrowButton").addEventListener("click", () => {
+          let tomorrow = addDays(new Date(), 1);
+          if (tomorrow.getDay() === 0) tomorrow = addDays(tomorrow, 1);
+          changeSelectedDate(tomorrow);
+        });
+        document.querySelector("#refreshButton").addEventListener("click", loadSchedule);
+        document.querySelector("#themeToggle").addEventListener("click", () => {
+          const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+          applyTheme(nextTheme);
+        });
+        elements.searchInput.addEventListener("focus", openSearchMenu);
+        elements.searchInput.addEventListener("input", () => {
+          elements.clearSearch.classList.toggle("visible", Boolean(elements.searchInput.value));
+          openSearchMenu();
+        });
+        elements.searchInput.addEventListener("keydown", event => {
+          if (event.key === "Enter") {
+            const firstOption = elements.searchOptions.querySelector(".search-option");
+            if (firstOption) {
+              event.preventDefault();
+              firstOption.click();
+            }
+          } else if (event.key === "Escape") {
+            closeSearchMenu();
+          }
+        });
+        elements.clearSearch.addEventListener("click", () => {
+          elements.searchInput.value = "";
+          elements.searchInput.focus();
+          elements.clearSearch.classList.remove("visible");
+          openSearchMenu();
+        });
+        for (const button of document.querySelectorAll(".search-mode")) {
+          button.addEventListener("click", () => changeSearchMode(button.dataset.mode));
+        }
+        document.addEventListener("click", event => {
+          if (!event.target.closest(".search-picker")) closeSearchMenu();
+        });
+        document.querySelector("#bellButton").addEventListener("click", () => elements.bellModal.classList.add("open"));
+        document.querySelector("#closeBell").addEventListener("click", () => elements.bellModal.classList.remove("open"));
+        elements.bellModal.addEventListener("click", event => {
+          if (event.target === elements.bellModal) elements.bellModal.classList.remove("open");
+        });
+        document.addEventListener("keydown", event => {
+          if (event.key === "Escape") {
+            closeSearchMenu();
+            elements.bellModal.classList.remove("open");
+          }
+        });
+        const telegram = window.Telegram?.WebApp;
+        if (telegram) {
+          telegram.ready();
+          telegram.expand();
+          if (telegram.isVersionAtLeast?.("6.1")) {
+            telegram.setHeaderColor?.("#111a30");
+            telegram.setBackgroundColor?.("#f4f6fb");
+          }
+        }
+        let savedTheme = "light";
+        try {
+          savedTheme = localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
+        } catch (error) {
+          console.warn("Не удалось прочитать сохранённую тему.", error);
+        }
+        applyTheme(savedTheme);
+        renderCalendar();
+        loadSearchOptions();
+      })();
+    </script>
+  </body>
+</html>
